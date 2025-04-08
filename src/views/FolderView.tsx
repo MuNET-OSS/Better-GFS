@@ -4,9 +4,16 @@ import useAsync from '@/hooks/useAsync';
 import napcat from '@/api/napcat';
 import { DataTableColumns, NButton, NDataTable, NFlex, NInput, NModal, NProgress, NTime, useMessage } from 'naive-ui';
 import { NapcatFile, NapcatFolder } from '@/types';
-import _ from 'lodash';
 import hSize from '@/utils/hSize';
 import { myInfo } from '@/store/refs';
+import { MediaPreviewType } from '@/enums';
+import MediaPreviewDialog from '@/components/MediaPreviewDialog';
+
+const previewTypes = [
+  [MediaPreviewType.Image, ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.avif', '.bmp', '.tiff']],
+  [MediaPreviewType.Video, ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.mkv', '.wmv']],
+  [MediaPreviewType.Audio, ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a']],
+] as const;
 
 export default defineComponent({
   // props: {
@@ -45,6 +52,8 @@ export default defineComponent({
     const renameFileId = ref<string | null>(null);
     const inputFileName = ref<string | null>(null);
     const moveTarget = ref<string[]>([]);
+    const previewType = ref(MediaPreviewType.None);
+    const previewUrl = ref('');
 
     watch(() => route.params, () => {
       selectedIds.value = [];
@@ -64,28 +73,45 @@ export default defineComponent({
           render(row) {
             if ('folder_name' in row)
               return <RouterLink to={`/${groupId.value}${row.folder_id}`} class={'c-blue-7'}>
-                <div class='flex gap-1 items-center'>
+                <div class="flex gap-1 items-center">
                   <div class={'i-material-symbols:folder-outline c-gray-5'} />
                   {row.folder_name}
                 </div>
               </RouterLink>;
-            return <div
-              class={'c-blue-7 cursor-pointer'} onClick={async () => {
-              napcat.getFileUrl(groupId.value, row.file_id)
-                .then(({ url }) => {
-                  const u = new URL(url);
-                  u.searchParams.set('fname', row.file_name);
-                  const a = document.createElement('a');
-                  a.href = u.toString();
-                  a.download = row.file_name;
-                  a.click();
-                })
-                .catch(err => {
-                  message.error(err.message);
-                });
-            }}
-            >
-              {row.file_name}
+            const preview = previewTypes.find(it => it[1].some(ext => row.file_name.endsWith(ext)));
+            return <div class="flex gap-1 items-center">
+              <div
+                class={'c-blue-7 cursor-pointer'}
+                onClick={async () => {
+                  napcat.getFileUrl(groupId.value, row.file_id)
+                    .then(({ url }) => {
+                      const u = new URL(url);
+                      u.searchParams.set('fname', row.file_name);
+                      const a = document.createElement('a');
+                      a.href = u.toString();
+                      a.download = row.file_name;
+                      a.click();
+                    })
+                    .catch(err => {
+                      message.error(err.message);
+                    });
+                }}
+              >
+                {row.file_name}
+              </div>
+              {preview && <div
+                class={'i-icon-park-outline:preview-open c-gray-5'}
+                onClick={async () => {
+                  napcat.getFileUrl(groupId.value, row.file_id)
+                    .then(({ url }) => {
+                      previewUrl.value = url;
+                      previewType.value = preview[0];
+                    })
+                    .catch(err => {
+                      message.error(err.message);
+                    });
+                }}
+              />}
             </div>;
           },
           resizable: true,
@@ -373,6 +399,7 @@ export default defineComponent({
       >
         <NProgress type="line" indicator-placement="inside" percentage={moveProgress.value} />
       </NModal>
+      <MediaPreviewDialog v-model:type={previewType.value} url={previewUrl.value} />
     </NFlex>;
   },
 });

@@ -19,7 +19,7 @@ export default defineComponent({
       <NAvatar src={`https://p.qlogo.cn/gh/${props.id}/${props.id}/0`} size={45} class={'shrink-0'} round />
       <div class={'flex flex-col gap-1 grow w-0'}>
         <div class={'of-hidden ws-nowrap text-ellipsis'}>{props.name}</div>
-        <div class={'text-sm c-gray'}>{props.id}</div>
+        <div class={'text-sm c-gray-5'}>{props.id}</div>
       </div>
     </div>;
   },
