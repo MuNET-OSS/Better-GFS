@@ -19,15 +19,15 @@ export default defineComponent({
     const groupId = computed(() => Number(route.params.groupId));
     const folderId = computed(() => route.params.folderId as string);
 
-    const files = useAsync(async () => {
-      if (!groupId.value) return [];
-      if (!folderId.value) return await napcat.getRootFiles(groupId.value);
-      return await napcat.getDirFiles(groupId.value, '/' + folderId.value);
-    });
-
     const filesRoot = useAsync(async () => {
       if (!groupId.value) return [];
       return await napcat.getRootFiles(groupId.value);
+    });
+
+    const files = useAsync(async () => {
+      if (!groupId.value) return [];
+      if (!folderId.value) return filesRoot.data.value;
+      return await napcat.getDirFiles(groupId.value, '/' + folderId.value);
     });
 
     const myMember = useAsync(async () => {
@@ -64,7 +64,10 @@ export default defineComponent({
           render(row) {
             if ('folder_name' in row)
               return <RouterLink to={`/${groupId.value}${row.folder_id}`} class={'c-blue-7'}>
-                {row.folder_name}
+                <div class='flex gap-1 items-center'>
+                  <div class={'i-material-symbols:folder-outline c-gray-5'} />
+                  {row.folder_name}
+                </div>
               </RouterLink>;
             return <div
               class={'c-blue-7 cursor-pointer'} onClick={async () => {
@@ -204,6 +207,7 @@ export default defineComponent({
     const showMoveTarget = ref(false);
     const deleteConfirm = ref(false);
     const deleteLoading = ref(false);
+    const showNewFolder = ref(false);
 
 
     return () => <NFlex vertical class={'py-2 pr-2'}>
@@ -242,6 +246,14 @@ export default defineComponent({
         >
           {deleteConfirm.value ? '确认删除' : '批量删除'}
         </NButton>
+        {!folderId.value && <NButton
+          secondary onClick={() => {
+          showNewFolder.value = true;
+          inputFileName.value = null;
+        }}
+        >
+          新建文件夹
+        </NButton>}
       </NFlex>
       <NDataTable
         columns={columns.value}
@@ -272,6 +284,29 @@ export default defineComponent({
               napcat.renameFile(groupId.value, fileId, folderId.value ? '/' + folderId.value : '/', inputFileName.value!)
                 .then(() => {
                   message.success('重命名成功');
+                  files.refresh();
+                  filesRoot.refresh();
+                })
+                .catch(err => message.error(err.message));
+            }}
+          >确定</NButton>
+        </NFlex>,
+      }}</NModal>
+      <NModal
+        preset="card"
+        class="w-[min(80vw,60em)]"
+        title="请输入新文件夹的名字"
+        v-model:show={showNewFolder.value}
+      >{{
+        default: () => <NInput v-model:value={inputFileName.value} />,
+        footer: () => <NFlex justify="end">
+          <NButton
+            disabled={!inputFileName.value}
+            onClick={() => {
+              showNewFolder.value = false;
+              napcat.createFolder(groupId.value, inputFileName.value!)
+                .then(() => {
+                  message.success('创建成功');
                   files.refresh();
                   filesRoot.refresh();
                 })
