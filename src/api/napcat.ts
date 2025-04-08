@@ -64,7 +64,7 @@ export default {
       folders: NapcatFolder[];
     };
   },
-  async getDirFiles(group_id: number | string, folder_id: string, file_count: 2147483647) {
+  async getDirFiles(group_id: number | string, folder_id: string, file_count = 2147483647) {
     return await baseFetch('get_group_files_by_folder', { group_id, folder_id, file_count }) as {
       files: NapcatFile[];
       folders: NapcatFolder[];
@@ -99,5 +99,10 @@ export default {
   },
   async deleteFile(group_id: number | string, file_id: string) {
     return await baseFetch('delete_group_file', { group_id, file_id }) as {};
+  },
+  async getFileUrl(group_id: number | string, file_id: string) {
+    return await baseFetch('get_group_file_url', { group_id, file_id }) as {
+      url: string
+    };
   },
 };
