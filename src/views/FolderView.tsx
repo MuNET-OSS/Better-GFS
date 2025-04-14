@@ -72,7 +72,11 @@ export default defineComponent({
           title: '名称', key: 'name',
           render(row) {
             if ('folder_name' in row)
-              return <RouterLink to={`/${groupId.value}${row.folder_id}`} class={'c-blue-7'}>
+              return <RouterLink
+                to={{
+                  name: 'groupFolder', params: { groupId: groupId.value, folderId: row.folder_id.substring(1) },
+                }} class={'c-blue-7'}
+              >
                 <div class="flex gap-1 items-center">
                   <div class={'i-material-symbols:folder-outline c-gray-5'} />
                   {row.folder_name}
@@ -238,9 +242,10 @@ export default defineComponent({
 
     return () => <NFlex vertical class={'py-2 pr-2'}>
       <NFlex>
-        {!!folderId.value && <NButton secondary onClick={() => router.push(`/${groupId.value}`)}>
-          返回根目录
-        </NButton>}
+        {!!folderId.value &&
+          <NButton secondary onClick={() => router.push({ name: 'groupRoot', params: { groupId: groupId.value } })}>
+            返回根目录
+          </NButton>}
         <NButton secondary disabled={!selectedIds.value.length} onClick={() => showMoveTarget.value = true}>
           批量移动
         </NButton>

@@ -28,7 +28,7 @@ export default defineComponent({
             case MediaPreviewType.Video:
               return <video src={props.url} class="w-full h-80vh object-contain" controls />;
             case MediaPreviewType.Audio:
-              return <audio src={props.url} class="w-full h-80vh object-contain" controls />;
+              return <audio src={props.url} class="w-full" controls />;
             default:
               return <div>不支持的文件类型</div>;
           }

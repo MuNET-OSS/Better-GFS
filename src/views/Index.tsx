@@ -15,7 +15,7 @@ export default defineComponent({
     const message = useMessage();
     onMounted(() => {
       if (!apiAddress.value)
-        router.replace('/setup');
+        router.replace({ name: 'setup' });
     });
 
     const myGroups = useAsync(() => {
@@ -26,7 +26,7 @@ export default defineComponent({
 
     whenever(() => myInfo.error.value || myGroups.error.value, error => {
       message.error(error.message);
-      router.replace('/setup');
+      router.replace({ name: 'setup' });
     });
 
     return () => <div class={'grid cols-[300px_minmax(0,1fr)] gap-4'}>
@@ -34,11 +34,11 @@ export default defineComponent({
         {myGroups.data.value?.map(it =>
           <GroupSection
             key={it.group_id} id={it.group_id} name={it.group_name} onClick={() => {
-            router.push(`/${it.group_id}/`);
+            router.push({ name: 'groupRoot', params: { groupId: it.group_id } });
           }}
           />)}
       </div>
-      <RouterView/>
+      <RouterView />
     </div>;
   },
 });

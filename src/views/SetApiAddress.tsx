@@ -20,7 +20,7 @@ export default defineComponent({
       if (apiAddress.value.endsWith('/')) {
         apiAddress.value = apiAddress.value.slice(0, -1);
       }
-      router.replace('/');
+      router.replace({ name: 'index' });
     };
 
     return () => <div class="h-100vh flex items-center justify-center">

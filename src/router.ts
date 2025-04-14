@@ -1,19 +1,16 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import Index from '@/views/Index';
-import Protobuf from '@/views/Protobuf';
-import SetApiAddress from '@/views/SetApiAddress';
-import FolderView from '@/views/FolderView';
+import { createRouter, createWebHashHistory } from 'vue-router';
 
 export default createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     {
-      path: '/', component: Index, children: [
-        { path: ':groupId', component: FolderView },
-        { path: ':groupId/:folderId', component: FolderView },
+      path: '/', component: () => import('./views/Index'), children: [
+        { path: ':groupId', component: () => import('./views/FolderView'), name: 'groupRoot' },
+        { path: ':groupId/:folderId', component: () => import('./views/FolderView'), name: 'groupFolder' },
       ],
+      name: 'index',
     },
-    { path: '/protobuf', component: Protobuf },
-    { path: '/setup', component: SetApiAddress },
+    { path: '/protobuf', component: () => import('./views/Protobuf') },
+    { path: '/setup', component: () => import('./views/SetApiAddress'), name: 'setup' },
   ],
 });
