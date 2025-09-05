@@ -34,7 +34,7 @@ export default defineComponent({
 
     // 监听路由变化，当没有选择群组时在移动端打开侧栏
     watch(() => route.name, (newRouteName) => {
-      if (newRouteName !== 'groupRoot' && window.innerWidth < 768) {
+      if (newRouteName !== 'groupRoot' && newRouteName !== 'groupFolder' && window.innerWidth < 768) {
         isSidebarOpen.value = true;
       }
     });
