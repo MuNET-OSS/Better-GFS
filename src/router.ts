@@ -1,7 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 
 export default createRouter({
-  history: createWebHistory(),
+  history: import.meta.env.VITE_HASH_HISTORY ? createWebHashHistory() : createWebHistory(),
   routes: [
     {
       path: '/', component: () => import('./views/Index'), children: [
