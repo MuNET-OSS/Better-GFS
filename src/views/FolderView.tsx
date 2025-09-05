@@ -125,6 +125,7 @@ export default defineComponent({
           ellipsis: {
             tooltip: true,
           },
+          minWidth: 300,
         },
         {
           title: '创建者', key: 'uploader_name',
@@ -137,6 +138,7 @@ export default defineComponent({
           ellipsis: {
             tooltip: true,
           },
+          minWidth: 200,
         },
         {
           title: '大小', key: 'size',
@@ -145,9 +147,9 @@ export default defineComponent({
               return `${row.total_file_count} 项`;
             return hSize(row.size);
           },
-          minWidth: 120,
-          width: 120,
-          maxWidth: 120,
+          minWidth: 90,
+          width: 90,
+          maxWidth: 90,
         },
         {
           title: '有效期', key: 'dead_time',
@@ -172,9 +174,9 @@ export default defineComponent({
               </div>;
             return '永久';
           },
-          minWidth: 220,
-          width: 220,
-          maxWidth: 220,
+          minWidth: 180,
+          width: 180,
+          maxWidth: 180,
         },
         {
           title: '时间', key: 'upload_time',
@@ -183,9 +185,9 @@ export default defineComponent({
               return <NTime time={row.create_time * 1000} />;
             return <NTime time={row.modify_time * 1000} />;
           },
-          minWidth: 220,
-          width: 220,
-          maxWidth: 220,
+          minWidth: 180,
+          width: 180,
+          maxWidth: 180,
         },
       );
       if (isAdmin.value) {
@@ -243,7 +245,7 @@ export default defineComponent({
     const showNewFolder = ref(false);
 
 
-    return () => <NFlex vertical class={'py-2 pr-2'}>
+    return () => <NFlex vertical>
       <NFlex>
         {!!folderId.value &&
           <NButton secondary onClick={() => router.push({ name: 'groupRoot', params: { groupId: groupId.value } })}>
@@ -298,6 +300,7 @@ export default defineComponent({
         loading={files.loading.value || filesRoot.loading.value}
         maxHeight="90vh"
         virtualScroll
+        scrollX={1200}
         rowKey={(row) => {
           if ('folder_name' in row)
             return row.folder_id;
