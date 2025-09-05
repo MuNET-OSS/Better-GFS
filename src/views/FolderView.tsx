@@ -85,7 +85,7 @@ export default defineComponent({
                   {row.folder_name}
                 </div>
               </RouterLink>;
-            const preview = previewTypes.find(it => it[1].some(ext => row.file_name.endsWith(ext)));
+            const preview = previewTypes.find(it => it[1].some(ext => row.file_name.toLowerCase().endsWith(ext)));
             return <div class="flex gap-1 items-center">
               <div
                 class={'c-blue-7 cursor-pointer'}
