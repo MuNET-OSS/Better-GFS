@@ -1,4 +1,4 @@
-import { apiAddress } from '@/store/refs';
+import { apiAddress, token } from '@/store/refs';
 import { NapcatFile, NapcatFolder } from '@/types';
 
 const baseFetch = async (action: string, params: any = {}) => {
@@ -8,8 +8,12 @@ const baseFetch = async (action: string, params: any = {}) => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      Authorization: token.value && `Bearer ${token.value}`,
     },
   });
+  if (req.status === 401 || req.status === 403) {
+    throw new Error('无权限');
+  }
   if (req.status !== 200) {
     throw new Error('请求失败');
   }
@@ -58,8 +62,8 @@ export default {
       title: string;
     };
   },
-  async getRootFiles(group_id: number | string) {
-    return await baseFetch('get_group_root_files', { group_id }) as {
+  async getRootFiles(group_id: number | string, file_count = 2147483647) {
+    return await baseFetch('get_group_root_files', { group_id, file_count }) as {
       files: NapcatFile[];
       folders: NapcatFolder[];
     };

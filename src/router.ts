@@ -1,7 +1,7 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 
 export default createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes: [
     {
       path: '/', component: () => import('./views/Index'), children: [
@@ -12,5 +12,6 @@ export default createRouter({
     },
     { path: '/protobuf', component: () => import('./views/Protobuf') },
     { path: '/setup', component: () => import('./views/SetApiAddress'), name: 'setup' },
+    { path: '/token/:token', component: () => import('./views/token'), name: 'token' },
   ],
 });

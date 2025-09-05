@@ -33,6 +33,7 @@ export default defineComponent({
 
     const files = useAsync(async () => {
       if (!groupId.value) return [];
+      if (filesRoot.loading.value) return [];
       if (!folderId.value) return filesRoot.data.value;
       return await napcat.getDirFiles(groupId.value, '/' + folderId.value);
     });
@@ -61,14 +62,16 @@ export default defineComponent({
     }, { deep: true });
 
     const columns = computed<DataTableColumns<NapcatFile | NapcatFolder>>(() => {
-      const res = [
-        {
+      const res: DataTableColumns<NapcatFile | NapcatFolder> = [];
+      if (isAdmin.value) {
+        res.push({
           type: 'selection',
           disabled(row) {
             return 'folder_name' in row;
           },
-        },
-        {
+        });
+      }
+      res.push({
           title: '名称', key: 'name',
           render(row) {
             if ('folder_name' in row)
@@ -184,7 +187,7 @@ export default defineComponent({
           width: 220,
           maxWidth: 220,
         },
-      ] as DataTableColumns<NapcatFile | NapcatFolder>;
+      );
       if (isAdmin.value) {
         res.push({
           title: '操作', key: 'actions',
@@ -246,51 +249,53 @@ export default defineComponent({
           <NButton secondary onClick={() => router.push({ name: 'groupRoot', params: { groupId: groupId.value } })}>
             返回根目录
           </NButton>}
-        <NButton secondary disabled={!selectedIds.value.length} onClick={() => showMoveTarget.value = true}>
-          批量移动
-        </NButton>
-        <NButton
-          secondary disabled={!selectedIds.value.length}
-          loading={deleteLoading.value} type={deleteConfirm.value ? 'error' : 'default'}
-          // @ts-ignore
-          onMouseleave={() => deleteConfirm.value = false}
-          onClick={async () => {
-            if (!deleteConfirm.value) {
-              deleteConfirm.value = true;
-              return;
-            }
-            deleteConfirm.value = false;
-            deleteLoading.value = true;
-            moveProgress.value = 0;
-            for (let i = 0; i < selectedIds.value.length; i++) {
-              const fileId = selectedIds.value[i];
-              await napcat.deleteFile(groupId.value, fileId)
-                .catch(err => message.error(err.message));
-              moveProgress.value = Math.round((i + 1) / selectedIds.value.length * 100);
-            }
-            moveProgress.value = -1;
-            selectedIds.value = [];
-            deleteLoading.value = false;
-            files.refresh();
-            filesRoot.refresh();
+        {isAdmin.value && <>
+          <NButton secondary disabled={!selectedIds.value.length} onClick={() => showMoveTarget.value = true}>
+            批量移动
+          </NButton>
+          <NButton
+            secondary disabled={!selectedIds.value.length}
+            loading={deleteLoading.value} type={deleteConfirm.value ? 'error' : 'default'}
+            // @ts-ignore
+            onMouseleave={() => deleteConfirm.value = false}
+            onClick={async () => {
+              if (!deleteConfirm.value) {
+                deleteConfirm.value = true;
+                return;
+              }
+              deleteConfirm.value = false;
+              deleteLoading.value = true;
+              moveProgress.value = 0;
+              for (let i = 0; i < selectedIds.value.length; i++) {
+                const fileId = selectedIds.value[i];
+                await napcat.deleteFile(groupId.value, fileId)
+                  .catch(err => message.error(err.message));
+                moveProgress.value = Math.round((i + 1) / selectedIds.value.length * 100);
+              }
+              moveProgress.value = -1;
+              selectedIds.value = [];
+              deleteLoading.value = false;
+              files.refresh();
+              filesRoot.refresh();
+            }}
+          >
+            {deleteConfirm.value ? '确认删除' : '批量删除'}
+          </NButton>
+          {!folderId.value && <NButton
+            secondary onClick={() => {
+            showNewFolder.value = true;
+            inputFileName.value = null;
           }}
-        >
-          {deleteConfirm.value ? '确认删除' : '批量删除'}
-        </NButton>
-        {!folderId.value && <NButton
-          secondary onClick={() => {
-          showNewFolder.value = true;
-          inputFileName.value = null;
-        }}
-        >
-          新建文件夹
-        </NButton>}
+          >
+            新建文件夹
+          </NButton>}
+        </>}
       </NFlex>
       <NDataTable
         columns={columns.value}
         data={filesFlat.value || []}
         v-model:checkedRowKeys={selectedIds.value}
-        loading={files.loading.value}
+        loading={files.loading.value || filesRoot.loading.value}
         maxHeight="90vh"
         virtualScroll
         rowKey={(row) => {
