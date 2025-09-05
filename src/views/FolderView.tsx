@@ -245,8 +245,8 @@ export default defineComponent({
     const showNewFolder = ref(false);
 
 
-    return () => <NFlex vertical>
-      <NFlex>
+    return () => <NFlex vertical class="mx-2">
+      <NFlex class="mt-2">
         {!!folderId.value &&
           <NButton secondary onClick={() => router.push({ name: 'groupRoot', params: { groupId: groupId.value } })}>
             返回根目录
