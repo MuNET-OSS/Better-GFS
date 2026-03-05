@@ -208,7 +208,7 @@ export default defineComponent({
           render(row) {
             if ('folder_name' in row)
               return `${row.total_file_count} 项`;
-            return hSize(row.size);
+            return hSize(row.size ?? row.file_size);
           },
           minWidth: 90,
           width: 90,

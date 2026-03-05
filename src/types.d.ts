@@ -3,7 +3,7 @@ export interface NapcatFile {
   file_id: string;
   file_name: string;
   busid: number;
-  size: number;
+  size?: number;
   file_size: number;
   upload_time: number;
   dead_time: number;

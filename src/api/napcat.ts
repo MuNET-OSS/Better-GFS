@@ -85,21 +85,26 @@ export default {
       file_id,
       current_parent_directory,
       target_parent_directory,
+      // LLBot 兼容
+      parent_directory: current_parent_directory,
+      target_directory: target_parent_directory,
     }) as {
       ok: true
     };
   },
-  // 转永久
+  // 转永久（napcat: trans_group_file, LLBot: set_group_file_forever）
   async transFile(group_id: number | string, file_id: string) {
-    return await baseFetch('trans_group_file', { group_id, file_id }) as {
-      ok: true
-    };
+    try {
+      return await baseFetch('trans_group_file', { group_id, file_id }) as { ok: true };
+    } catch {
+      return await baseFetch('set_group_file_forever', { group_id, file_id }) as { ok: true };
+    }
   },
   async createFolder(group_id: number | string, folder_name: string) {
-    return await baseFetch('create_group_file_folder', { group_id, folder_name }) as {};
+    return await baseFetch('create_group_file_folder', { group_id, folder_name, name: folder_name }) as {};
   },
-  async deleteFolder(group_id: number | string, folder_name: string) {
-    return await baseFetch('delete_group_folder', { group_id, folder_name }) as {};
+  async deleteFolder(group_id: number | string, folder_id: string) {
+    return await baseFetch('delete_group_folder', { group_id, folder_id }) as {};
   },
   async deleteFile(group_id: number | string, file_id: string) {
     return await baseFetch('delete_group_file', { group_id, file_id }) as {};
