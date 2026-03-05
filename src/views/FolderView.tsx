@@ -92,10 +92,17 @@ export default defineComponent({
     });
     const permanentOnly = ref(false);
     const fileTypeFilter = ref<FileTypeFilter>('all');
+    const fileNameFilter = ref('');
     const filesFlat = computed(() => {
       if (!files.data.value || !('folders' in files.data.value)) return [];
 
+      const nameQuery = fileNameFilter.value.toLowerCase();
+
       const filteredFiles = files.data.value.files.filter(file => {
+        if (nameQuery && !file.file_name.toLowerCase().includes(nameQuery)) {
+          return false;
+        }
+
         if (permanentOnly.value && !!file.dead_time) {
           return false;
         }
@@ -110,7 +117,11 @@ export default defineComponent({
         return true;
       });
 
-      return [...files.data.value.folders, ...filteredFiles];
+      const filteredFolders = nameQuery
+        ? files.data.value.folders.filter(folder => folder.folder_name.toLowerCase().includes(nameQuery))
+        : files.data.value.folders;
+
+      return [...filteredFolders, ...filteredFiles];
     });
     const selectedIds = ref<string[]>([]);
     const renameFileId = ref<string | null>(null);
@@ -445,6 +456,13 @@ export default defineComponent({
           options={fileTypeOptions}
           onUpdateValue={value => fileTypeFilter.value = value as FileTypeFilter}
           class="w-40"
+        />
+        <NInput
+          value={fileNameFilter.value}
+          onUpdateValue={value => fileNameFilter.value = value}
+          placeholder="搜索文件名…"
+          clearable
+          class="w-0! grow"
         />
       </NFlex>
       <NDataTable
