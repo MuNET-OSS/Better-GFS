@@ -189,6 +189,14 @@ export default defineComponent({
             tooltip: true,
           },
           minWidth: 300,
+          sorter(a, b) {
+            const aIsFolder = 'folder_name' in a;
+            const bIsFolder = 'folder_name' in b;
+            if (aIsFolder !== bIsFolder) return aIsFolder ? -1 : 1;
+            const aName = aIsFolder ? (a as NapcatFolder).folder_name : (a as NapcatFile).file_name;
+            const bName = bIsFolder ? (b as NapcatFolder).folder_name : (b as NapcatFile).file_name;
+            return aName.localeCompare(bName);
+          },
         },
         {
           title: '创建者', key: 'uploader_name',
@@ -202,6 +210,32 @@ export default defineComponent({
             tooltip: true,
           },
           minWidth: 200,
+          sorter(a, b) {
+            const aIsFolder = 'folder_name' in a;
+            const bIsFolder = 'folder_name' in b;
+            if (aIsFolder !== bIsFolder) return aIsFolder ? -1 : 1;
+            const aName = aIsFolder ? (a as NapcatFolder).creator_name : (a as NapcatFile).uploader_name;
+            const bName = bIsFolder ? (b as NapcatFolder).creator_name : (b as NapcatFile).uploader_name;
+            return aName.localeCompare(bName);
+          },
+          filterOptions: (() => {
+            const names = new Map<number, string>();
+            for (const row of filesFlat.value || []) {
+              if ('folder_name' in row) {
+                names.set(row.creator, row.creator_name);
+              } else {
+                names.set(row.uploader, row.uploader_name);
+              }
+            }
+            return Array.from(names.entries()).map(([id, name]) => ({
+              label: `${name} (${id})`,
+              value: id,
+            }));
+          })(),
+          filter(value, row) {
+            if ('folder_name' in row) return row.creator === value;
+            return row.uploader === value;
+          },
         },
         {
           title: '大小', key: 'size',
@@ -210,9 +244,37 @@ export default defineComponent({
               return `${row.total_file_count} 项`;
             return hSize(row.size ?? row.file_size);
           },
-          minWidth: 90,
-          width: 90,
-          maxWidth: 90,
+          minWidth: 110,
+          width: 110,
+          maxWidth: 110,
+          sorter(a, b) {
+            const aIsFolder = 'folder_name' in a;
+            const bIsFolder = 'folder_name' in b;
+            if (aIsFolder !== bIsFolder) return aIsFolder ? -1 : 1;
+            if (aIsFolder && bIsFolder) return (a as NapcatFolder).total_file_count - (b as NapcatFolder).total_file_count;
+            return ((a as NapcatFile).size ?? (a as NapcatFile).file_size) - ((b as NapcatFile).size ?? (b as NapcatFile).file_size);
+          },
+          filterOptions: [
+            { label: '< 1 MB', value: 'lt1m' },
+            { label: '1 - 10 MB', value: '1m-10m' },
+            { label: '10 - 100 MB', value: '10m-100m' },
+            { label: '100 MB - 1 GB', value: '100m-1g' },
+            { label: '> 1 GB', value: 'gt1g' },
+          ],
+          filter(value, row) {
+            if ('folder_name' in row) return true;
+            const size = (row as NapcatFile).size ?? (row as NapcatFile).file_size;
+            const MB = 1024 * 1024;
+            const GB = 1024 * 1024 * 1024;
+            switch (value) {
+              case 'lt1m': return size < MB;
+              case '1m-10m': return size >= MB && size < 10 * MB;
+              case '10m-100m': return size >= 10 * MB && size < 100 * MB;
+              case '100m-1g': return size >= 100 * MB && size < GB;
+              case 'gt1g': return size >= GB;
+              default: return true;
+            }
+          },
         },
         {
           title: '有效期', key: 'dead_time',
@@ -240,6 +302,18 @@ export default defineComponent({
           minWidth: 180,
           width: 180,
           maxWidth: 180,
+          sorter(a, b) {
+            const aIsFolder = 'folder_name' in a;
+            const bIsFolder = 'folder_name' in b;
+            if (aIsFolder !== bIsFolder) return aIsFolder ? -1 : 1;
+            if (aIsFolder && bIsFolder) return 0;
+            const aDead = (a as NapcatFile).dead_time;
+            const bDead = (b as NapcatFile).dead_time;
+            if (!aDead && !bDead) return 0;
+            if (!aDead) return 1;
+            if (!bDead) return -1;
+            return aDead - bDead;
+          },
         },
         {
           title: '时间', key: 'upload_time',
@@ -251,6 +325,14 @@ export default defineComponent({
           minWidth: 180,
           width: 180,
           maxWidth: 180,
+          sorter(a, b) {
+            const aIsFolder = 'folder_name' in a;
+            const bIsFolder = 'folder_name' in b;
+            if (aIsFolder !== bIsFolder) return aIsFolder ? -1 : 1;
+            const aTime = aIsFolder ? (a as NapcatFolder).create_time : (a as NapcatFile).modify_time;
+            const bTime = bIsFolder ? (b as NapcatFolder).create_time : (b as NapcatFile).modify_time;
+            return aTime - bTime;
+          },
         },
       );
       if (isAdmin.value) {
