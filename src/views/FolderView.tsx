@@ -344,6 +344,30 @@ export default defineComponent({
             const bTime = bIsFolder ? (b as NapcatFolder).create_time : (b as NapcatFile).modify_time;
             return aTime - bTime;
           },
+          filterOptions: [
+            { label: '今天', value: 'today' },
+            { label: '最近三天', value: '3d' },
+            { label: '最近一周', value: '1w' },
+            { label: '最近一月', value: '1m' },
+            { label: '最近一年', value: '1y' },
+            { label: '更早', value: 'older' },
+          ],
+          filter(value, row) {
+            const time = ('folder_name' in row)
+              ? (row as NapcatFolder).create_time
+              : (row as NapcatFile).modify_time;
+            const now = Date.now() / 1000;
+            const DAY = 86400;
+            switch (value) {
+              case 'today': return now - time < DAY;
+              case '3d': return now - time < 3 * DAY;
+              case '1w': return now - time < 7 * DAY;
+              case '1m': return now - time < 30 * DAY;
+              case '1y': return now - time < 365 * DAY;
+              case 'older': return now - time >= 365 * DAY;
+              default: return true;
+            }
+          },
         },
       );
       if (isAdmin.value) {
