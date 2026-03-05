@@ -2,7 +2,7 @@ import { defineComponent, PropType, ref, computed, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import useAsync from '@/hooks/useAsync';
 import napcat from '@/api/napcat';
-import { DataTableColumns, NButton, NDataTable, NFlex, NInput, NModal, NProgress, NTime, useMessage } from 'naive-ui';
+import { DataTableColumns, NButton, NCheckbox, NDataTable, NFlex, NInput, NModal, NProgress, NSelect, NTime, useMessage } from 'naive-ui';
 import { NapcatFile, NapcatFolder } from '@/types';
 import hSize from '@/utils/hSize';
 import { myInfo } from '@/store/refs';
@@ -14,6 +14,48 @@ const previewTypes = [
   [MediaPreviewType.Video, ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.mkv', '.wmv']],
   [MediaPreviewType.Audio, ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a']],
 ] as const;
+
+const fileTypeExtensionMap = {
+  image: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.avif', '.bmp', '.tiff', '.heic', '.heif'],
+  video: ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.m4v', '.3gp'],
+  audio: ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.ape', '.wma'],
+  document: ['.txt', '.md', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.csv'],
+  archive: ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'],
+} as const;
+
+type FileTypeFilter = keyof typeof fileTypeExtensionMap | 'all' | 'other';
+
+const fileTypeOptions: Array<{ label: string; value: FileTypeFilter }> = [
+  { label: '全部类型', value: 'all' },
+  { label: '图片', value: 'image' },
+  { label: '视频', value: 'video' },
+  { label: '音频', value: 'audio' },
+  { label: '文档', value: 'document' },
+  { label: '压缩包', value: 'archive' },
+  { label: '其他', value: 'other' },
+];
+
+const getFileExtension = (fileName: string) => {
+  const dotIndex = fileName.lastIndexOf('.');
+  if (dotIndex === -1) return '';
+  return fileName.slice(dotIndex).toLowerCase();
+};
+
+const getFileType = (fileName: string): Exclude<FileTypeFilter, 'all'> => {
+  const ext = getFileExtension(fileName);
+  if (!ext) return 'other';
+
+  for (const [fileType, extensions] of Object.entries(fileTypeExtensionMap) as Array<[
+    Exclude<FileTypeFilter, 'all' | 'other'>,
+    readonly string[],
+  ]>) {
+    if (extensions.includes(ext)) {
+      return fileType;
+    }
+  }
+
+  return 'other';
+};
 
 export default defineComponent({
   // props: {
@@ -48,7 +90,28 @@ export default defineComponent({
       if (!myMember.data.value) return false;
       return myMember.data.value.role === 'admin' || myMember.data.value.role === 'owner';
     });
-    const filesFlat = computed(() => files.data.value && 'folders' in files.data.value && [...files.data.value.folders, ...files.data.value.files]);
+    const permanentOnly = ref(false);
+    const fileTypeFilter = ref<FileTypeFilter>('all');
+    const filesFlat = computed(() => {
+      if (!files.data.value || !('folders' in files.data.value)) return [];
+
+      const filteredFiles = files.data.value.files.filter(file => {
+        if (permanentOnly.value && !!file.dead_time) {
+          return false;
+        }
+
+        if (fileTypeFilter.value !== 'all') {
+          const currentType = getFileType(file.file_name);
+          if (currentType !== fileTypeFilter.value) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      return [...files.data.value.folders, ...filteredFiles];
+    });
     const selectedIds = ref<string[]>([]);
     const renameFileId = ref<string | null>(null);
     const inputFileName = ref<string | null>(null);
@@ -246,7 +309,7 @@ export default defineComponent({
 
 
     return () => <NFlex vertical class="mx-2">
-      <NFlex class="mt-2">
+      <NFlex class="mt-2" align="center">
         {!!folderId.value &&
           <NButton secondary onClick={() => router.push({ name: 'groupRoot', params: { groupId: groupId.value } })}>
             返回根目录
@@ -292,6 +355,15 @@ export default defineComponent({
             新建文件夹
           </NButton>}
         </>}
+        <NCheckbox v-model:checked={permanentOnly.value}>
+          仅永久文件
+        </NCheckbox>
+        <NSelect
+          value={fileTypeFilter.value}
+          options={fileTypeOptions}
+          onUpdateValue={value => fileTypeFilter.value = value as FileTypeFilter}
+          class="w-40"
+        />
       </NFlex>
       <NDataTable
         columns={columns.value}
